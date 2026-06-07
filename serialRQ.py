@@ -36,17 +36,35 @@ class SerialReader:
 
     def close(self):
         self.ser.close()
+def main():
+    ser = serial.Serial(
+        port      = 'COM20',  # Windows: 'COM3'
+        baudrate  = 115200,
+        timeout   = 1
+    )
+    print("Listening on serial port...")
 
+    while True:
+        try:
+            raw  = ser.readline().decode('utf-8').strip()
+            data = parse_data(raw)
+
+            if data:
+                print(f"TDS: {data['tds']} ppm | "
+                      f"Turbidity: {data['turbidity']} NTU | "
+                      f"pH: {data['ph']} | "
+                      f"Temp: {data['temp']} °C")
+            else:
+                print(f"Invalid data: {raw}")
+
+        except KeyboardInterrupt:
+            print("Stopped.")
+            break
+        except UnicodeDecodeError:
+            print("Decode error, skipping line.")
+
+    ser.close()
 
 # --- Test / Debug ---
 if __name__ == "__main__":
-    # Simulate without hardware
-    test_lines = [
-        "$,350.5,1.2,7.1,28.5,#",
-        "$,invalid,data,#",        # bad format
-        "$,420.0,0.8,6.9,29.1,#",
-    ]
-    for line in test_lines:
-        result = parse_data(line)
-        print(f"Input : {line}")
-        print(f"Output: {result}\n")
+    main()
